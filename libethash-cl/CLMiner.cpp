@@ -235,8 +235,7 @@ std::vector<cl::Device> getDevices(
     size_t platform_num = min<size_t>(_platformId, _platforms.size() - 1);
     try
     {
-        _platforms[platform_num].getDevices(
-            CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR, &devices);
+        _platforms[platform_num].getDevices(CL_DEVICE_TYPE_ALL, &devices);
     }
     catch (cl::Error const& err)
     {
