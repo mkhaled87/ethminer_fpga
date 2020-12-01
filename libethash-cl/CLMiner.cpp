@@ -256,7 +256,7 @@ CLMiner::CLMiner(unsigned _index, CLSettings _settings, DeviceDescriptor& _devic
 {
     m_deviceDescriptor = _device;
     m_settings.localWorkSize = ((m_settings.localWorkSize + 7) / 8) * 8;
-    m_settings.globalWorkSize = m_settings.localWorkSize * m_settings.globalWorkSizeMultiplier;
+    //m_settings.globalWorkSize = m_settings.localWorkSize * m_settings.globalWorkSizeMultiplier;
 }
 
 CLMiner::~CLMiner()
@@ -295,8 +295,10 @@ void CLMiner::workLoop()
     WorkPackage current;
     current.header = h256();
 
-    if (!initDevice())
-    return;
+    if (!initDevice()){
+        cllog << "Exiting work-loop as device not initialized ! ";
+        return;
+    }
 
     try
     {
@@ -390,6 +392,9 @@ void CLMiner::workLoop()
 
             // Run the kernel.
             m_searchKernel.setArg(5, startNonce);
+
+            cllog << "Kernel run (search): Global=" << m_settings.globalWorkSize << ", Local=" << m_settings.localWorkSize;
+
             m_queue[0].enqueueNDRangeKernel(
                 m_searchKernel, cl::NullRange, m_settings.globalWorkSize, m_settings.localWorkSize);
 
@@ -459,22 +464,6 @@ void CLMiner::enumDevices(std::map<string, DeviceDescriptor>& _DevicesCollection
     for (unsigned int pIdx = 0; pIdx < platforms.size(); pIdx++)
     {
         std::string platformName = platforms.at(pIdx).getInfo<CL_PLATFORM_NAME>();
-        ClPlatformTypeEnum platformType = ClPlatformTypeEnum::Unknown;
-        if (platformName == "AMD Accelerated Parallel Processing")
-            platformType = ClPlatformTypeEnum::Amd;
-        else if (platformName == "Clover" || platformName == "Intel Gen OCL Driver")
-            platformType = ClPlatformTypeEnum::Clover;
-        else if (platformName == "NVIDIA CUDA")
-            platformType = ClPlatformTypeEnum::Nvidia;
-        else if (platformName.find("Intel") != string::npos)
-            platformType = ClPlatformTypeEnum::Intel;
-        else
-        {
-            std::cerr << "Unrecognized platform " << platformName << std::endl;
-            continue;
-        }
-
-
         std::string platformVersion = platforms.at(pIdx).getInfo<CL_PLATFORM_VERSION>();
         unsigned int platformVersionMajor = std::stoi(platformVersion.substr(7, 1));
         unsigned int platformVersionMinor = std::stoi(platformVersion.substr(9, 1));
@@ -483,6 +472,18 @@ void CLMiner::enumDevices(std::map<string, DeviceDescriptor>& _DevicesCollection
         vector<cl::Device> devices = getDevices(platforms, pIdx);
         for (auto const& device : devices)
         {
+            std::string tmpDeviceName = platformName + std::string("/") + std::string(device.getInfo<CL_DEVICE_NAME>());
+
+            ClPlatformTypeEnum platformType = ClPlatformTypeEnum::Unknown;
+            if (tmpDeviceName.find("AMD") != string::npos)
+                platformType = ClPlatformTypeEnum::Amd;
+            else if (tmpDeviceName.find("Clover") != string::npos || platformName == "Intel Gen OCL Driver")
+                platformType = ClPlatformTypeEnum::Clover;
+            else if (tmpDeviceName.find("NVIDIA") != string::npos)
+                platformType = ClPlatformTypeEnum::Nvidia;
+            else if (tmpDeviceName.find("Intel") != string::npos)
+                platformType = ClPlatformTypeEnum::Intel;            
+            
             DeviceTypeEnum clDeviceType = DeviceTypeEnum::Unknown;
             cl_device_type detectedType = device.getInfo<CL_DEVICE_TYPE>();
             if (detectedType == CL_DEVICE_TYPE_GPU)
@@ -604,12 +605,14 @@ bool CLMiner::initDevice()
     // LookUp device
     // Load available platforms
     vector<cl::Platform> platforms = getPlatforms();
-    if (platforms.empty())
+    if (platforms.empty()){
         return false;
+    }
 
     vector<cl::Device> devices = getDevices(platforms, m_deviceDescriptor.clPlatformId);
-    if (devices.empty())
+    if (devices.empty()){
         return false;
+    }
 
     m_device = devices.at(m_deviceDescriptor.clDeviceOrdinal);
 
@@ -645,9 +648,14 @@ bool CLMiner::initDevice()
     else
     {
         // Don't know what to do with this
-        cllog << "Unrecognized Platform";
-        return false;
+        m_hwmoninfo.deviceType = HwMonitorInfoType::UNKNOWN;
+        m_hwmoninfo.devicePciId = m_deviceDescriptor.uniqueId;
+        m_hwmoninfo.deviceIndex = -1;  // Will be later on mapped by nvml (see Farm() constructor)
+        m_settings.noBinary = true;
+        m_settings.noExit = true;
     }
+
+
     if (!m_settings.noExit && (m_hwmoninfo.deviceType != HwMonitorInfoType::AMD))
     {
         m_settings.noExit = true;
@@ -776,16 +784,17 @@ bool CLMiner::initEpoch_internal()
         if (!m_settings.noExit)
             addDefinition(code, "FAST_EXIT", 1);
 
-
         // create miner OpenCL program
         cl::Program::Sources sources{{code.data(), code.size()}};
         cl::Program program(m_context[0], sources), binaryProgram;
         try
         {
+            cllog << "Trying to build the program from source.";
             program.build({m_device}, options);
         }
         catch (cl::BuildError const& buildErr)
         {
+            cllog << "Failed to build the program from source.";
             cwarn << "OpenCL kernel build log:\n"
                   << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
             cwarn << "OpenCL kernel build error (" << buildErr.err() << "):\n" << buildErr.what();
@@ -908,12 +917,26 @@ bool CLMiner::initEpoch_internal()
 
             // If we have a binary kernel to use, let's try it
             // otherwise just do a normal opencl load
-            if (loadedBinary)
+            if (loadedBinary){
+                cllog << "Creating SEARCH kernel from binary program.";
                 m_searchKernel = cl::Kernel(binaryProgram, "search");
-            else
+            } else {
+                cllog << "Creating SEARCH kernel from normal program.";
                 m_searchKernel = cl::Kernel(program, "search");
+            }
 
+            // check the actual local work-group size for Search
+            size_t actualLocalWGSize = m_searchKernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(m_device);
+            if(actualLocalWGSize < m_settings.localWorkSize)
+                cwarn <<  "Built kernel for SEARCH suggests less actual local work-group size = " << actualLocalWGSize;            
+
+            cllog << "Creating GenerateDAG kernel from normal program.";
             m_dagKernel = cl::Kernel(program, "GenerateDAG");
+
+            // check the actual local work-group size for GenerateDAG
+            actualLocalWGSize = m_dagKernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(m_device);
+            if(actualLocalWGSize < m_settings.localWorkSize)
+                cwarn <<  "Built kernel for GenerateDAG suggests less actual local work-group size = " << actualLocalWGSize;
 
             m_queue[0].enqueueWriteBuffer(
                 m_light[0], CL_TRUE, 0, m_epochContext.lightSize, m_epochContext.lightCache);
@@ -946,8 +969,9 @@ bool CLMiner::initEpoch_internal()
 
         const uint32_t workItems = m_dagItems * 2;  // GPU computes partial 512-bit DAG items.
 
+        cllog << "Launching the kernel of DAG construction (" << workItems << " work items in DAG).";
         uint32_t start;
-        const uint32_t chunk = 10000 * m_settings.localWorkSize;
+        const uint32_t chunk = m_settings.globalWorkSize;
         for (start = 0; start <= workItems - chunk; start += chunk)
         {
             m_dagKernel.setArg(0, start);

@@ -528,9 +528,9 @@ public:
         if (m_shouldListDevices)
         {
             cout << setw(4) << " Id ";
-            cout << setiosflags(ios::left) << setw(10) << "Pci Id    ";
+            cout << setiosflags(ios::left) << setw(14) << "Pci Id    ";
             cout << setw(5) << "Type ";
-            cout << setw(30) << "Name                          ";
+            cout << setw(40) << "Name                          ";
 
 #if ETH_ETHASHCUDA
             if (m_minerType == MinerType::CUDA || m_minerType == MinerType::Mixed)
@@ -552,14 +552,16 @@ public:
                      << " ";
                 cout << resetiosflags(ios::left) << setw(13) << "Cl Max W.Grp"
                      << " ";
+                cout << resetiosflags(ios::left) << setw(13) << "Cl Max C.Unt"
+                     << " ";
             }
 #endif
 
             cout << resetiosflags(ios::left) << endl;
             cout << setw(4) << "--- ";
-            cout << setiosflags(ios::left) << setw(10) << "--------- ";
+            cout << setiosflags(ios::left) << setw(14) << "------------- ";
             cout << setw(5) << "---- ";
-            cout << setw(30) << "----------------------------- ";
+            cout << setw(40) << "--------------------------------------- ";
 
 #if ETH_ETHASHCUDA
             if (m_minerType == MinerType::CUDA || m_minerType == MinerType::Mixed)
@@ -581,6 +583,8 @@ public:
                      << " ";
                 cout << resetiosflags(ios::left) << setw(13) << "------------"
                      << " ";
+                cout << resetiosflags(ios::left) << setw(13) << "------------"
+                     << " ";
             }
 #endif
             cout << resetiosflags(ios::left) << endl;
@@ -589,7 +593,7 @@ public:
             {
                 auto i = std::distance(m_DevicesCollection.begin(), it);
                 cout << setw(3) << i << " ";
-                cout << setiosflags(ios::left) << setw(10) << it->first;
+                cout << setiosflags(ios::left) << setw(14) << it->first;
                 cout << setw(5);
                 switch (it->second.type)
                 {
@@ -605,7 +609,7 @@ public:
                 default:
                     break;
                 }
-                cout << setw(30) << (it->second.name).substr(0, 28);
+                cout << setw(40) << (it->second.name).substr(0, 38);
 #if ETH_ETHASHCUDA
                 if (m_minerType == MinerType::CUDA || m_minerType == MinerType::Mixed)
                 {
@@ -626,6 +630,8 @@ public:
                          << getFormattedMemory((double)it->second.clMaxMemAlloc) << " ";
                     cout << resetiosflags(ios::left) << setw(13)
                          << getFormattedMemory((double)it->second.clMaxWorkGroup) << " ";
+                    cout << resetiosflags(ios::left) << setw(13)
+                         << it->second.clMaxComputeUnits << " ";
                 }
 #endif
                 cout << resetiosflags(ios::left) << endl;
