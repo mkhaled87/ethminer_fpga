@@ -36,3 +36,8 @@ install(TARGETS ethminer DESTINATION ${CMAKE_INSTALL_BINDIR})
 if(MSVC)
     install(FILES $<TARGET_PDB_FILE:ethminer> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
 endif()
+
+if(APPLE)
+	include_directories(${OPENSSL_ROOT_DIR}/include/)
+	link_directories(${OPENSSL_ROOT_DIR}/lib/)
+endif()

@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lockfree/queue.hpp>
+#include <boost/bind.hpp>
 
 #include <json/json.h>
 

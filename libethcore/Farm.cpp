@@ -382,7 +382,11 @@ void Farm::restart()
  */
 void Farm::restart_async()
 {
+#if BOOST_VERSION >= 107000
     m_io_strand.context().post(m_io_strand.wrap(boost::bind(&Farm::restart, this)));
+#else
+    m_io_strand.get_io_service().post(m_io_strand.wrap(boost::bind(&Farm::restart, this)));
+#endif
 }
 
 /**
