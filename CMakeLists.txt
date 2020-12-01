@@ -16,6 +16,7 @@ set(HUNTER_JOBS_NUMBER 6 CACHE STRING "Number of parallel builds used by Hunter"
 HunterGate(
     URL "https://github.com/ruslo/hunter/archive/v0.23.214.tar.gz"
     SHA1 "e14bc153a7f16d6a5eeec845fb0283c8fad8c358"
+    LOCAL
 )
 
 project(ethminer)
@@ -62,6 +63,7 @@ endfunction()
 
 hunter_add_package(Boost COMPONENTS system filesystem thread)
 find_package(Boost CONFIG REQUIRED COMPONENTS system filesystem thread)
+
 
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)
