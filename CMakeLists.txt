@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
+
 include(cmake/cable/bootstrap.cmake)
 
 include(CableBuildInfo)
@@ -63,7 +64,6 @@ endfunction()
 
 hunter_add_package(Boost COMPONENTS system filesystem thread)
 find_package(Boost CONFIG REQUIRED COMPONENTS system filesystem thread)
-
 
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)
