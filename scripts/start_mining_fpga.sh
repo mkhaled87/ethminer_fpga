@@ -3,7 +3,7 @@
 # to get the device id run: ../ethminer/ethminer --list-devices
 
 # configs
-ACCOUNT=0x14551935EDf4aF06909336084412dd805aE14b26
+ACCOUNT=14551935EDf4aF06909336084412dd805aE14b26
 WORKER=FPGAs
 MINING_POOL=eu1.ethermine.org
 POOL_PORT=4444

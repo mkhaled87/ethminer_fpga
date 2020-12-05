@@ -392,9 +392,6 @@ void CLMiner::workLoop()
 
             // Run the kernel.
             m_searchKernel.setArg(5, startNonce);
-
-            cllog << "Kernel run (search): Global=" << m_settings.globalWorkSize << ", Local=" << m_settings.localWorkSize;
-
             m_queue[0].enqueueNDRangeKernel(
                 m_searchKernel, cl::NullRange, m_settings.globalWorkSize, m_settings.localWorkSize);
 

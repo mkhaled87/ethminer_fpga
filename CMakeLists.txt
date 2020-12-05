@@ -62,6 +62,13 @@ function(configureProject)
     endif()
 endfunction()
 
+# propagate custom OpenCL directories to sub-projects
+if(OPENCL_INC_DIR AND OPENCL_LIB_DIR)
+    set_directory_properties(PROPERTIES OPENCL_INC_DIR=${OPENCL_INC_DIR} OPENCL_LIB_DIR=${OPENCL_LIB_DIR})
+    include_directories(${OPENCL_INC_DIR})
+    link_directories(${OPENCL_LIB_DIR})
+endif()
+
 hunter_add_package(Boost COMPONENTS system filesystem thread)
 find_package(Boost CONFIG REQUIRED COMPONENTS system filesystem thread)
 
