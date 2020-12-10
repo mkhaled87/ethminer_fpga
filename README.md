@@ -31,6 +31,17 @@ The list of current and past maintainers, authors and contributors to the ethmin
 | M. Khaled     | [@mkhaled87](https://github.com/mkhaled87)     | Ethereum: 0x14551935EDf4aF06909336084412dd805aE14b26, BitCoin: 1MKHALEDqXhBzqa86hj8FbDGW5HvDdA5Tq|
 
 
+
++---------------+---------------+--------------------+
+| Fruit         | Price         | Advantages         |
++===============+===============+====================+
+| Bananas       | first line\   | first line\        |
+|               | next line     | next line          |
++---------------+---------------+--------------------+
+| Bananas       | first line\   | first line\        |
+|               | next line     | next line          |
++---------------+---------------+--------------------+
+
 ## License
 
 Licensed under the [GNU General Public License, Version 3](LICENSE).
