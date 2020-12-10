@@ -13,14 +13,20 @@ set msvc=-DMSVC=TRUE
 @ECHO 2- Install vcpkg and then use it to install: boost-filesystem:x64-windows boost-lockfree:x64-windows boost-format:x64-windows boost-process:x64-windows boost-dll:x64-windows boost-asio:x64-windows boost-thread:x64-windows boost-multiprecision:x64-windows jsoncpp:x64-windows openssl:x64-windows cli11:x64-windows
 @ECHO 3- Install (ethash) next to ethminer_fpga using VS command line terminal: git clone https://github.com/chfast/ethash; md build; cd build; cmake .. -G %vsversion%; cmake --build . --config Release; [as Admin:] cmake --install . 
 @ECHO    Ethash it will be installed in C:\Program Files (x86)\ethash\
-@ECHO 4- Run this BAT file inside the VS Command Line terminal.
+@ECHO 4- Run this BAT file inside the VS Command Line terminal, any other terminal aware of the path integration VS-CMAKE integration; e.g.: launch (vscode) from VS command line and user its terminal.
 @ECHO ------------------------------------------------------------------------
 SET /P AREYOUSURE=Did you do all of the above and ready to start (Y/[N])?
 IF /I "%AREYOUSURE%" NEQ "Y" GOTO END
 
 
+SET /P REBUILDALL=Do you want to rebuild all from scratch (Y/[N])?
+IF /I "%REBUILDALL%" NEQ "Y" GOTO KEEPOLDS
+
 mkdir ..\build
 rd /S /Q ..\build
+
+
+:KEEPOLDS
 mkdir ..\build
 cd ..\build
 set triplet=-DVCPKG_TARGET_TRIPLET=x64-windows
