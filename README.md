@@ -32,9 +32,9 @@ The list of current and past maintainers, authors and contributors to the ethmin
 
 
 ## Tested Devices
-| Device                | Details                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| Terasic DE10-Pro<br /><img src="https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg" width="100">| Technical details: [Terasic website](https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=13&No=1144&PartNo=1)<br />Hashrates: soon.  |
+| Device                | Details                                                       | Hashrates                           |
+| --------------------- | ------------------------------------------------------------- | ----------------------------------- |
+| Terasic DE10-Pro<br /><img src="https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg" width="100">| Intel Stratix 10 GX/SX FPGA<br />8 GB DDR4 RAM<br />All Technical details: [Terasic website](https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=13&No=1144&PartNo=1) | Soon.  |
 
 ## License
 
