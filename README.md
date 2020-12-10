@@ -34,7 +34,9 @@ The list of current and past maintainers, authors and contributors to the ethmin
 ## Tested Devices
 | Device                | Details                                                                               |
 | --------------------- | ------------------------------------------------------------------------------------- |
-| Terasic DE10-Pro<br />[[https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg|width=100px]]      | Technical details: [Terasic website](https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=13&No=1144&PartNo=1)<br />Hashrates: soon.  |
+| Terasic DE10-Pro<br />      | Technical details: [Terasic website](https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=13&No=1144&PartNo=1)<br />Hashrates: soon.  |
+
+[[https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg|width=100px]]
 
 
 ## License
