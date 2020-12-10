@@ -37,7 +37,7 @@ The list of current and past maintainers, authors and contributors to the ethmin
 | Terasic DE10-Pro<br />      | Technical details: [Terasic website](https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=13&No=1144&PartNo=1)<br />Hashrates: soon.  |
 
 <p align="center"> 
-<img src="https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg?raw=true" style="width:800px;">
+<img src="https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg?raw=true" style="width:100px;">
 </p>
 
 ## License
