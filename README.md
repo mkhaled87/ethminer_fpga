@@ -26,8 +26,8 @@ See [docs/BUILD.md](docs/BUILD.md) for build/compilation details.
 
 The list of current and past maintainers, authors and contributors to the ethminer_fpga project.
 
-| Name                  | Contact                   |                                                    |
-| --------------------- | ------------------------- | -------------------------------------------------- |
+| Name                  | Contact                   |                                     |
+| --------------------- | ------------------------- | ----------------------------------- |
 | M. Khaled     | [@mkhaled87](https://github.com/mkhaled87)     | Ethereum: 0x14551935EDf4aF06909336084412dd805aE14b26, BitCoin: 1MKHALEDqXhBzqa86hj8FbDGW5HvDdA5Tq|
 
 
