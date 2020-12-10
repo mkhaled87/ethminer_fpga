@@ -28,7 +28,7 @@ The list of current and past maintainers, authors and contributors to the ethmin
 
 | Name                  | Contact                   |                                                              |
 | --------------------- | ------------------------- | ------------------------------------------------------------ |
-| M. Khaled     | [@mkhaled87](https://github.com/mkhaled87)     | ETH: 0x14551935EDf4aF06909336084412dd805aE14b26,<br\>BTC: 1MKHALEDqXhBzqa86hj8FbDGW5HvDdA5Tq|
+| M. Khaled     | [@mkhaled87](https://github.com/mkhaled87)     | Ethereum: 0x14551935EDf4aF06909336084412dd805aE14b26, BitCoin: 1MKHALEDqXhBzqa86hj8FbDGW5HvDdA5Tq|
 
 
 ## License
