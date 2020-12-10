@@ -2,6 +2,10 @@
 
 # to get the device id run: ../ethminer/ethminer --list-devices
 
+
+Out dated !
+copy from the bat file !
+
 # configs
 ACCOUNT=14551935EDf4aF06909336084412dd805aE14b26
 WORKER=FPGAs

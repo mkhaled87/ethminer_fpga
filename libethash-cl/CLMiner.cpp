@@ -469,6 +469,7 @@ void CLMiner::enumDevices(std::map<string, DeviceDescriptor>& _DevicesCollection
         vector<cl::Device> devices = getDevices(platforms, pIdx);
         for (auto const& device : devices)
         {
+            
             std::string tmpDeviceName = platformName + std::string("/") + std::string(device.getInfo<CL_DEVICE_NAME>());
 
             ClPlatformTypeEnum platformType = ClPlatformTypeEnum::Unknown;
@@ -533,6 +534,12 @@ void CLMiner::enumDevices(std::map<string, DeviceDescriptor>& _DevicesCollection
                 s << "CPU:" << setfill('0') << setw(2) << hex << (pIdx + dIdx);
                 uniqueId = s.str();
             }
+            else if (clDeviceType == DeviceTypeEnum::Accelerator)
+            {
+                std::ostringstream s;
+                s << "HWA:" << setfill('0') << setw(2) << hex << (pIdx + dIdx);
+                uniqueId = s.str();
+            }            
             else
             {
                 // We're not prepared (yet) to handle other platforms or types
@@ -620,12 +627,15 @@ bool CLMiner::initDevice()
         m_hwmoninfo.devicePciId = m_deviceDescriptor.uniqueId;
         m_hwmoninfo.deviceIndex = -1;  // Will be later on mapped by nvml (see Farm() constructor)
         m_settings.noBinary = true;
+        m_settings.noSource = false;
     }
     else if (m_deviceDescriptor.clPlatformType == ClPlatformTypeEnum::Amd)
     {
         m_hwmoninfo.deviceType = HwMonitorInfoType::AMD;
         m_hwmoninfo.devicePciId = m_deviceDescriptor.uniqueId;
         m_hwmoninfo.deviceIndex = -1;  // Will be later on mapped by nvml (see Farm() constructor)
+        m_settings.noBinary = true;
+        m_settings.noSource = false;        
     }
     else if (m_deviceDescriptor.clPlatformType == ClPlatformTypeEnum::Clover)
     {
@@ -633,6 +643,7 @@ bool CLMiner::initDevice()
         m_hwmoninfo.devicePciId = m_deviceDescriptor.uniqueId;
         m_hwmoninfo.deviceIndex = -1;  // Will be later on mapped by nvml (see Farm() constructor)
         m_settings.noBinary = true;
+        m_settings.noSource = false;
     }
     else if (m_deviceDescriptor.clPlatformType == ClPlatformTypeEnum::Intel)
     {
@@ -640,6 +651,7 @@ bool CLMiner::initDevice()
         m_hwmoninfo.devicePciId = m_deviceDescriptor.uniqueId;
         m_hwmoninfo.deviceIndex = -1;  // Will be later on mapped by nvml (see Farm() constructor)
         m_settings.noBinary = true;
+        m_settings.noSource = false;
         m_settings.noExit = true;
     }
     else
@@ -649,8 +661,22 @@ bool CLMiner::initDevice()
         m_hwmoninfo.devicePciId = m_deviceDescriptor.uniqueId;
         m_hwmoninfo.deviceIndex = -1;  // Will be later on mapped by nvml (see Farm() constructor)
         m_settings.noBinary = true;
+        m_settings.noSource = false;
         m_settings.noExit = true;
     }
+
+    
+    // override some stuff for accelerators !
+    if (m_deviceDescriptor.type == DeviceTypeEnum::Accelerator)
+    {
+        m_hwmoninfo.deviceType = HwMonitorInfoType::UNKNOWN;
+        m_hwmoninfo.devicePciId = m_deviceDescriptor.uniqueId;
+        m_hwmoninfo.deviceIndex = -1;  // Will be later on mapped by nvml (see Farm() constructor)
+        m_settings.noBinary = false;
+        m_settings.noSource = true;
+        m_settings.noExit = true;
+    }
+
 
 
     if (!m_settings.noExit && (m_hwmoninfo.deviceType != HwMonitorInfoType::AMD))
@@ -669,12 +695,14 @@ bool CLMiner::initDevice()
                 << "OpenCL " << m_deviceDescriptor.clPlatformVersion
                 << " not supported, but platform Clover might work nevertheless. USE AT OWN RISK!";
         }
+        /*
         else
         {
             cllog << "OpenCL " << m_deviceDescriptor.clPlatformVersion
                   << " not supported. Minimum required version is 1.2";
             throw new std::runtime_error("OpenCL 1.2 required");
         }
+        */
     }
 
     ostringstream s;
@@ -733,90 +761,52 @@ bool CLMiner::initEpoch_internal()
     cllog << "Generating split DAG + Light (total): "
           << dev::getFormattedMemory((double)RequiredMemory);
 
+
+    if (m_settings.noBinary && m_settings.noSource){
+            cwarn << "No feasable OpenCL program creation method specified: you can't set both --cl-nobin and --cl-nosource !";
+            pause(MinerPauseEnum::PauseDueToInitEpochError);
+            return true;
+    }
+
     try
     {
-
-        char options[256] = {0};
-        int computeCapability = 0;
-#ifndef __clang__
-
-        // Nvidia
-        if (!m_deviceDescriptor.clNvCompute.empty())
-        {
-            computeCapability =
-                m_deviceDescriptor.clNvComputeMajor * 10 + m_deviceDescriptor.clNvComputeMinor;
-            int maxregs = computeCapability >= 35 ? 72 : 63;
-            sprintf(options, "-cl-nv-maxrregcount=%d", maxregs);
-        }
-
-#endif
-        // create context
+        // create context/queue
         m_context.clear();
         m_context.push_back(cl::Context(vector<cl::Device>(&m_device, &m_device + 1)));
         m_queue.clear();
         m_queue.push_back(cl::CommandQueue(m_context[0], m_device));
 
 
-        m_dagItems = m_epochContext.dagNumItems;
+        // programs: only one will be used
+        cl::Program binaryProgram;
+        cl::Program sourceProgram;
 
-        // patch source code
-        // note: The kernels here are simply compiled version of the respective .cl kernels
-        // into a byte array by bin2h.cmake. There is no need to load the file by hand in runtime
-        // See libethash-cl/CMakeLists.txt: add_custom_command()
-        // TODO: Just use C++ raw string literal.
-        string code;
-
-        cllog << "OpenCL kernel";
-        code = string(ethash_cl, ethash_cl + sizeof(ethash_cl));
-
-        addDefinition(code, "WORKSIZE", m_settings.localWorkSize);
-        addDefinition(code, "ACCESSES", 64);
-        addDefinition(code, "MAX_OUTPUTS", c_maxSearchResults);
-        addDefinition(code, "PLATFORM", m_deviceDescriptor.clPlatformId);
-        addDefinition(code, "COMPUTE", computeCapability);
-
-        if (m_deviceDescriptor.clPlatformType == ClPlatformTypeEnum::Clover)
-            addDefinition(code, "LEGACY", 1);
-
-        if (!m_settings.noExit)
-            addDefinition(code, "FAST_EXIT", 1);
-
-        // create miner OpenCL program
-        cl::Program::Sources sources{{code.data(), code.size()}};
-        cl::Program program(m_context[0], sources), binaryProgram;
-        try
-        {
-            cllog << "Trying to build the program from source.";
-            program.build({m_device}, options);
-        }
-        catch (cl::BuildError const& buildErr)
-        {
-            cllog << "Failed to build the program from source.";
-            cwarn << "OpenCL kernel build log:\n"
-                  << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
-            cwarn << "OpenCL kernel build error (" << buildErr.err() << "):\n" << buildErr.what();
-            pause(MinerPauseEnum::PauseDueToInitEpochError);
-            return true;
-        }
-
+        // create OpenCL program from binary
         /* If we have a binary kernel, we load it in tandem with the opencl,
            that way, we can use the dag generate opencl code and fall back on
            the default kernel if loading fails for whatever reason */
         bool loadedBinary = false;
-        std::string device_name = m_deviceDescriptor.clName;
-
         if (!m_settings.noBinary)
-        {
+        {            
             std::ifstream kernel_file;
             vector<unsigned char> bin_data;
             std::stringstream fname_strm;
 
-            /* Open kernels/ethash_{devicename}_lws{local_work_size}.bin */
-            std::transform(device_name.begin(), device_name.end(), device_name.begin(), ::tolower);
-            fname_strm << boost::dll::program_location().parent_path().string()
-                       << "/kernels/ethash_" << device_name << "_lws" << m_settings.localWorkSize
-                       << (m_settings.noExit ? "" : "_exit") << ".bin";
-            cllog << "Loading binary kernel " << fname_strm.str();
+            if(m_settings.binFile.empty())
+            {
+                /* Open kernels/ethash_{devicename}_lws{local_work_size}.bin */
+                std::string device_name = m_deviceDescriptor.clName;
+                std::transform(device_name.begin(), device_name.end(), device_name.begin(), ::tolower);
+                fname_strm << boost::dll::program_location().parent_path().string()
+                        << "/kernels/ethash_" << device_name << "_lws" << m_settings.localWorkSize
+                        << (m_settings.noExit ? "" : "_exit") << ".bin";
+            }
+            else
+            {
+                fname_strm << m_settings.binFile;
+            }
+            cllog << "Loading binary kernel from the file: " << fname_strm.str();
+
             try
             {
                 kernel_file.open(fname_strm.str(), ios::in | ios::binary);
@@ -834,7 +824,7 @@ bool CLMiner::initEpoch_internal()
                     cl::Program program(m_context[0], {m_device}, blobs);
                     try
                     {
-                        program.build({m_device}, options);
+                        program.build({m_device});
                         cllog << "Build info success:"
                               << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
                         binaryProgram = program;
@@ -845,21 +835,66 @@ bool CLMiner::initEpoch_internal()
                         cwarn << "Build failed! Info:"
                               << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
                         cwarn << fname_strm.str();
-                        cwarn << "Falling back to OpenCL kernel...";
+                        pause(MinerPauseEnum::PauseDueToInitEpochError);
+                        return true;
                     }
                 }
                 else
                 {
                     cwarn << "Failed to load binary kernel: " << fname_strm.str();
-                    cwarn << "Falling back to OpenCL kernel...";
+                    pause(MinerPauseEnum::PauseDueToInitEpochError);
+                    return true;
                 }
             }
             catch (...)
             {
                 cwarn << "Failed to load binary kernel: " << fname_strm.str();
-                cwarn << "Falling back to OpenCL kernel...";
+                pause(MinerPauseEnum::PauseDueToInitEpochError);
+                return true;
             }
         }
+
+        // create OpenCL program from source
+        bool loadedSource = false;
+        if (!m_settings.noSource)
+        {
+            string code;
+            int computeCapability = 0;
+            cllog << "OpenCL kernel";
+            code = string(ethash_cl, ethash_cl + sizeof(ethash_cl));
+            addDefinition(code, "WORKSIZE", m_settings.localWorkSize);
+            addDefinition(code, "ACCESSES", 64);
+            addDefinition(code, "MAX_OUTPUTS", c_maxSearchResults);
+            addDefinition(code, "PLATFORM", m_deviceDescriptor.clPlatformId);
+            addDefinition(code, "COMPUTE", computeCapability);
+
+            if (m_deviceDescriptor.clPlatformType == ClPlatformTypeEnum::Clover)
+                addDefinition(code, "LEGACY", 1);
+
+            if (!m_settings.noExit)
+                addDefinition(code, "FAST_EXIT", 1);
+
+            cl::Program::Sources sources{{code.data(), code.size()}};
+            cl::Program program(m_context[0], sources);
+            try
+            {
+                cllog << "Trying to build the program from source.";
+                program.build({m_device});
+            }
+            catch (cl::BuildError const& buildErr)
+            {
+                cllog << "Failed to build the program from source.";
+                cwarn << "OpenCL kernel build log:\n"
+                    << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device);
+                cwarn << "OpenCL kernel build error (" << buildErr.err() << "):\n" << buildErr.what();
+                pause(MinerPauseEnum::PauseDueToInitEpochError);
+                return true;
+            }
+            sourceProgram = program;
+            loadedSource = true;
+            cllog << "Build the program from source succeeded.";
+        }
+
 
         // create buffer for dag
         try
@@ -919,7 +954,7 @@ bool CLMiner::initEpoch_internal()
                 m_searchKernel = cl::Kernel(binaryProgram, "search");
             } else {
                 cllog << "Creating SEARCH kernel from normal program.";
-                m_searchKernel = cl::Kernel(program, "search");
+                m_searchKernel = cl::Kernel(sourceProgram, "search");
             }
 
             // check the actual local work-group size for Search
@@ -927,8 +962,16 @@ bool CLMiner::initEpoch_internal()
             if(actualLocalWGSize < m_settings.localWorkSize)
                 cwarn <<  "Built kernel for SEARCH suggests less actual local work-group size = " << actualLocalWGSize;            
 
-            cllog << "Creating GenerateDAG kernel from normal program.";
-            m_dagKernel = cl::Kernel(program, "GenerateDAG");
+
+            // If we have a binary kernel to use, let's try it
+            // otherwise just do a normal opencl load
+            if (loadedBinary){
+                cllog << "Creating GenerateDAG kernel from binary program.";
+                m_dagKernel = cl::Kernel(binaryProgram, "GenerateDAG");
+            } else {
+                cllog << "Creating GenerateDAG kernel from normal program.";
+                m_dagKernel = cl::Kernel(sourceProgram, "GenerateDAG");
+            }
 
             // check the actual local work-group size for GenerateDAG
             actualLocalWGSize = m_dagKernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(m_device);
@@ -944,7 +987,10 @@ bool CLMiner::initEpoch_internal()
             pause(MinerPauseEnum::PauseDueToInitEpochError);
             return true;
         }
+
+
         // create buffer for header
+        m_dagItems = m_epochContext.dagNumItems;
         cllog << "Creating buffer for header.";
         m_header.clear();
         m_header.push_back(cl::Buffer(m_context[0], CL_MEM_READ_ONLY, 32));

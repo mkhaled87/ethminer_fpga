@@ -323,6 +323,10 @@ public:
 
         app.add_flag("--cl-nobin", m_CLSettings.noBinary, "");
 
+        app.add_flag("--cl-nosource", m_CLSettings.noSource, "");
+
+        app.add_option("--cl-binary-file", m_CLSettings.binFile, "");
+
         app.add_flag("--cl-noexit", m_CLSettings.noExit, "");
 
 #endif

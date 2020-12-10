@@ -31,7 +31,7 @@ mkdir ..\build
 cd ..\build
 set triplet=-DVCPKG_TARGET_TRIPLET=x64-windows
 
-cmake.exe .. -DCMAKE_BUILD_TYPE=Release %vcpkg% %msvc% %triplet% -G %vsversion% -DHUNTER_ENABLED=OFF -DETHASHCL=ON -DETHASHCUDA=OFF -DAPICORE=OFF -DBINKERN=ON -DETHDBUS=OFF -DUSE_SYS_OPENCL=OFF -DOPENCL_INC_DIR=%ocl_inc_dir% -DOPENCL_LIB_DIR=%ocl_lib_dir%
+cmake.exe .. -DCMAKE_BUILD_TYPE=Release %vcpkg% %msvc% %triplet% -G %vsversion% -DHUNTER_ENABLED=OFF -DETHASHCL=ON -DETHASHCUDA=OFF -DAPICORE=OFF -DBINKERN=OFF -DETHDBUS=OFF -DUSE_SYS_OPENCL=OFF -DOPENCL_INC_DIR=%ocl_inc_dir% -DOPENCL_LIB_DIR=%ocl_lib_dir%
 cmake --build . --config Release
 
 cd ..\scripts

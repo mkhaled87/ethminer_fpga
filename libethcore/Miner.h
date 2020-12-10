@@ -107,6 +107,8 @@ struct CUSettings : public MinerSettings
 struct CLSettings : public MinerSettings
 {
     bool noBinary = false;
+    bool noSource = false;
+    std::string binFile = "";
     bool noExit = false;
     unsigned globalWorkSize = 0;
     unsigned globalWorkSizeMultiplier = 65536;
