@@ -18,14 +18,20 @@
 
 //customization for testing
 //--------------------------
-#define WORKSIZE 64
 #define ACCESSES 64
 #define MAX_OUTPUTS 4
 //--------------------------
 
+#ifndef WORKSIZE
+    #error "WORKSIZE has to be adefined orr passed to the compiler"
+#endif
 
 #if WORKSIZE % 4 != 0
     #error "WORKSIZE has to be a multiple of 4"
+#endif
+
+#ifndef NUM_CUS
+    #define NUM_CUS 1
 #endif
 
 
@@ -200,12 +206,14 @@ struct SearchResults {
     uint abort;
 };
 
+
+__attribute__((num_compute_units(NUM_CUS)))
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
 __kernel void search(
     __global struct SearchResults* restrict g_output,
-    __constant uint2 const* g_header,
-    __global ulong8 const* _g_dag0,
-    __global ulong8 const* _g_dag1,
+    __constant uint2 const* restrict g_header,
+    __global ulong8 const* restrict _g_dag0,
+    __global ulong8 const* restrict _g_dag1,
     uint dag_size,
     ulong start_nonce,
     ulong target
@@ -360,7 +368,13 @@ static void SHA3_512(uint2 *s)
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
-__kernel void GenerateDAG(uint start, __global const uint16 *_Cache, __global uint16 *_DAG0, __global uint16 *_DAG1, uint light_size)
+__kernel void GenerateDAG(
+    uint start, 
+    __global const uint16* restrict _Cache, 
+    __global uint16* restrict _DAG0, 
+    __global uint16* restrict _DAG1, 
+    uint light_size
+)
 {
     __global const Node *Cache = (__global const Node *) _Cache;
     uint NodeIdx = start + get_global_id(0);
