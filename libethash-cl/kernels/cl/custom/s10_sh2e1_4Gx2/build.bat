@@ -3,7 +3,7 @@
 rem All paths must be relative to current folder !
 SET BOARD=s10_sh2e1_4Gx2
 SET KERNEL_FILE=ethash.cl
-SET NUM_CUS=4
+SET NUM_CUS=8
 SET TARGET_LWS=256 128 64 32
 SET OUT_BIN_FOLDER=..\..\..\bin\%BOARD%_cu%NUM_CUS%
 
@@ -34,4 +34,4 @@ for %%x in (%TARGET_LWS%) do (
 
 cd ..
 del /F/Q/S .\tmp\*.* > NUL
-rd .\tmp
+del /F/Q .\tmp > NUL
