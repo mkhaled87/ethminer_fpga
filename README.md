@@ -1,6 +1,6 @@
 # ethminer_fpga
 
-> Modified version of the OpenCL-ready Ethereum miner (etminer) with support for FPGAs (HW Accelerators).
+Modified version of the OpenCL-ready Ethereum miner (etminer) with support for FPGAs (HW Accelerators).
 
 
 ## Usage
