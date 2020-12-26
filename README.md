@@ -34,7 +34,7 @@ The list of current and past maintainers, authors and contributors to the ethmin
 ## Tested Devices
 | Device                | Details                                                       | Hashrates                           |
 | --------------------- | ------------------------------------------------------------- | ----------------------------------- |
-| Terasic DE10-Pro<br /><img src="https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg" width="100">| Type: Accelerator/FPGA<br />FPGA: Stratix 10 GX/SX<br />RAM: 8 GB DDR4<br />More details: [Terasic website](https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=13&No=1144&PartNo=1) | s10_sh2e1_4Gx2 (2 CU)/LWS_256: 1.44 Mh/s. <br /> s10_sh2e1_4Gx2 (4CU)/LWS_256: Soon. <br /> s10_sh2e1_4Gx2 (8 CU)/LWS_256: Soon. |
+| Terasic DE10-Pro<br /><img src="https://www.terasic.com.tw/attachment/archive/1144/image/RevB_45.jpg" width="100">| Type: Accelerator/FPGA<br />FPGA: Stratix 10 GX/SX<br />RAM: 8 GB DDR4<br />More details: [Terasic website](https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=13&No=1144&PartNo=1) | s10_sh2e1_4Gx2 (2 CU)/LWS_256: 1.44 Mh/s. <br /> s10_sh2e1_8Gx4 (4CU)/LWS_256: Soon.|
 
 ## License
 
