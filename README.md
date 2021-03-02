@@ -3,7 +3,16 @@
 Modified version of the OpenCL-ready Ethereum miner (etminer) with support for FPGAs (HW Accelerators).
 
 
-## Usage
+## Quick-start Guide
+
+- Make sure your FPGA supports OpenCL.
+- Build this miner from its source using CMake. You can benifit from the special build scripts (e.g., [scripts/build_windows.bat](scripts/build_windows.bat) for Windows) or follow the original instructions from the forked Ethminer (here [docs/BUILD.md](docs/BUILD.md)).
+- FPGAs dont build the OpenCL Kernels online and the kernels need to be built apriori. Each vendor (e.g., Intel Altera or Xilinx) provide their own toolchains (OpenCL High-Level Synthesis Compiler). You can benifit from the example build script I made for Intel Altera toolchain on the Terasic DE10-Pro card in (here [libethash-cl/kernels/cl/custom/s10_sh2e1_4Gx2/build.bat](libethash-cl/kernels/cl/custom/s10_sh2e1_4Gx2/build.bat)). Notice that you may need to slightly modify the OpenCL kernel to make it comparible with the requirements of the toolchain and what levels of OpenCL does it support. See my [modified OpenCL kernel](libethash-cl/kernels/cl/custom/s10_sh2e1_4Gx2/build.bat) for Intel Aaltera / Terasic DE10-Pro card. 
+- Once the kernel is compiled, run the miner and pass the kernel binary to it. You may here also benifit from [my launch script](scripts/start_mining_fpga.bat) that runs on Intel Aaltera / Terasic DE10-Pro card.
+- If things work for you, dont forget to donate ;)
+
+
+## Usage of the miner software
 
 The **ethminer** is a command line program. This means you launch it either
 from a Windows command prompt or Linux console, or create shortcuts to
@@ -14,13 +23,6 @@ For a full list of available command, please run:
 ethminer --help
 ```
 
-### Examples connecting to pools
-
-Check our [samples](docs/POOL_EXAMPLES_ETH.md) to see how to connect to different pools.
-
-## Build and Install
-
-See [docs/BUILD.md](docs/BUILD.md) for build/compilation details.
 
 ## Maintainers / Donations
 
